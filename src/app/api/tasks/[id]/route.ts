@@ -1,31 +1,52 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/app/api/db';
-import task from '@/models/task';
+import Task from '@/models/task';
 
-export async function GET(request: NextResponse, { params }: any) {
+export async function GET(request: Request, { params }: any) {
   connectDB();
-  console.debug(params.id);
-  return NextResponse.json({ message: `La tarea ${params.id} no existe` });
+  try {
+    const currentTask = await Task.findById(params.id);
+    console.log(currentTask);
+    if (!currentTask)
+      return NextResponse.json({ message: 'Task not found' }, { status: 404 });
+    return NextResponse.json(currentTask, { status: 200 });
+  } catch (err: any) {
+    console.error(err);
+    return NextResponse.json(err.message, { status: 400 });
+  }
 }
 
-export async function POST() {
-  // const { title, description } = req.body;
-  // const newTask = new ModelTask({ title, description });
-  // await newTask.save();
-  // return NextResponse.redirect("/tasks");
-  return NextResponse.json({
-    message: 'Actualmente no es posible añadir tareas',
-  });
+export async function PUT(request: Request, { params }: any) {
+  const { title, description } = await request.json();
+
+  try {
+    const TaskUpdated = await Task.findByIdAndUpdate(
+      params.id,
+      {
+        title,
+        description,
+      },
+      { new: true }
+    );
+    console.log(TaskUpdated);
+    if (!TaskUpdated)
+      return NextResponse.json({ message: 'Task not found' }, { status: 404 });
+    return NextResponse.json(TaskUpdated, { status: 200 });
+  } catch (err: any) {
+    console.error(err);
+    return NextResponse.json(err.message, { status: 400 });
+  }
 }
 
-export async function PUT(request: NextResponse, { params }: any) {
-  return NextResponse.json({
-    message: 'Actualmente no es posible actualizar tareas',
-  });
-}
-
-export async function DELETE(request: NextResponse, { params }: any) {
-  return NextResponse.json({
-    message: 'Actualmente no es posible eliminar tareas',
-  });
+export async function DELETE(request: Request, { params }: any) {
+  try {
+    const TaskDeleted = await Task.findByIdAndDelete(params.id);
+    console.log(TaskDeleted);
+    if (!TaskDeleted)
+      return NextResponse.json({ message: 'Task not found' }, { status: 404 });
+    return NextResponse.json(TaskDeleted, { status: 200 });
+  } catch (err: any) {
+    console.error(err);
+    return NextResponse.json(err.message, { status: 400 });
+  }
 }
